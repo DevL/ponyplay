@@ -51,7 +51,7 @@ class State
 
 actor Main
   new create(env: Env) =>
-    let log: Log = Log.create(env.out, Info)
+    let log: Logger = Logger.create(env.out, Debug)
     let breeder = Breeder(log)
     let terminal = ANSITerm(Readline(recover CLIHandler end, env.out), env.input)
     terminal.prompt("You may have a pony! > ")
@@ -65,55 +65,22 @@ actor Main
     end
 
     env.input(consume notify)
+    log.info("We should see this.")
+    log.set_log_level(Warning)
+    log.info("Maybe not this.")
+    log.warn("This we should see though.")
 
 
 actor Breeder
-  let log: Log
+  let log: Logger
 
-  new create(log': Log) =>
+  new create(log': Logger) =>
     log = log'
-    log.warn("Breeder created.")
+    log.debug("Breeder created.")
 
   be apply(name: String, breed: String) =>
     log.info("Spawning a pony (" + breed + ") named " + name + "...")
     let pony = Pony.spawn(name, 0, breed, Stallion)
-
-
-// Logging
-primitive Info    fun apply(): String => "INFO"
-primitive Warning fun apply(): String => "WARN"
-primitive Failure fun apply(): String => "FAIL"
-type LogLevel is (Info | Warning | Failure)
-
-actor Log
-  let output: StdStream
-  let level: LogLevel
-
-  new create(output': StdStream, level': LogLevel = Info) =>
-    output = output'
-    level = level'
-
-  be info(message: String) =>
-    if level() == Info() then
-      log(Info() + ": " + message)
-    end
-
-  be warn(message: String) =>
-    match level
-    | Info => log(Warning() + ": " + message)
-    | Warning => log(Warning() + ": " + message)
-    else
-      None
-    end
-    // if (level() == Info()) or (level() == Warning()) then
-    //   log(Warning() + ": " + message)
-    // end
-
-  be fail(message: String) =>
-    log(Failure() + ": " + message)
-
-  fun log(message: String) =>
-    output.print(message)
 
 
 // Ponies
